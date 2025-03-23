@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 | TransMbD失智监护辅助系统{% endblock %}
+
+{% block page_title %}欢迎使用 TransMbD 失智监护辅助系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center mb-5">
+        <h1 class="display-4 text-primary mb-4">TransMbD</h1>
+        <p class="lead">TransMbD（Transformer Mistral 7B based on Dementia）是一个基于大型语言模型的失智症监护辅助系统，旨在利用人工智能技术辅助医护人员观察患者并判定失智症严重程度。</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <a href="{% url 'patient_interface' %}" class="btn btn-primary btn-lg btn-block py-4">
+                    <i class="fas fa-comments fa-2x mb-3"></i><br>
+                    患者界面
+                </a>
+                <p class="mt-2 text-muted">适用于患者，提供对话式交互</p>
+            </div>
+            <div class="col-md-6">
+                <a href="{% url 'caregiver_dashboard' %}" class="btn btn-success btn-lg btn-block py-4">
+                    <i class="fas fa-user-md fa-2x mb-3"></i><br>
+                    照护人员界面
+                </a>
+                <p class="mt-2 text-muted">适用于照护人员，提供监测和分析功能</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">系统功能概览</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="circle-icon mb-3 bg-primary">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <h5 class="card-title">智能对话</h5>
+                                <p class="card-text">通过自然语言交互，引导患者提供有价值的信息，支持文本和语音输入。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="circle-icon mb-3 bg-success">
+                                    <i class="fas fa-chart-bar text-white"></i>
+                                </div>
+                                <h5 class="card-title">症状分析</h5>
+                                <p class="card-text">基于患者的语言表达进行多维度分析，评估认知能力的不同方面。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="circle-icon mb-3 bg-info">
+                                    <i class="fas fa-brain text-white"></i>
+                                </div>
+                                <h5 class="card-title">严重程度预测</h5>
+                                <p class="card-text">利用大型语言模型技术预测失智症严重程度，跟踪病情发展趋势。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="circle-icon mb-3 bg-warning">
+                                    <i class="fas fa-clipboard-list text-white"></i>
+                                </div>
+                                <h5 class="card-title">详细报告</h5>
+                                <p class="card-text">生成全面的评估报告，提供数据可视化和具体干预建议。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">系统架构</h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5>TransMbD: Transformer Mistral 7B based on Dementia</h5>
+                        <p>本系统基于开源大型语言模型Mistral 7B构建，通过对特定失智症数据集的微调，实现了对失智症症状的精确识别和评估。</p>
+                        <ul class="list-group mb-4">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                患者自然语言输入
+                                <i class="fas fa-arrow-right"></i>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                文本处理和特征提取
+                                <i class="fas fa-arrow-right"></i>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Mistral 7B模型处理
+                                <i class="fas fa-arrow-right"></i>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                TransMbD失智症分析
+                                <i class="fas fa-arrow-right"></i>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                多维度评估结果和对话引导
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="https://via.placeholder.com/500x300?text=TzzransMbD+Framework" alt="TransMbD架构图" class="img-fluid rounded shadow">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">快速开始</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">患者使用指南</h5>
+                            </div>
+                            <div class="card-body">
+                                <ol>
+                                    <li class="mb-2">点击上方的"患者界面"按钮</li>
+                                    <li class="mb-2">通过文本框输入或点击"语音输入"按钮进行交流</li>
+                                    <li class="mb-2">系统会引导您进行对话，请自然地回答问题</li>
+                                    <li class="mb-2">完成对话后，系统会自动分析您的状态</li>
+                                    <li>您可以随时点击"结束对话"按钮结束交流</li>
+                                </ol>
+                                <div class="text-center mt-4">
+                                    <a href="{% url 'patient_interface' %}" class="btn btn-primary">
+                                        <i class="fas fa-comments"></i> 开始对话
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">照护人员使用指南</h5>
+                            </div>
+                            <div class="card-body">
+                                <ol>
+                                    <li class="mb-2">点击上方的"照护人员界面"按钮并登录</li>
+                                    <li class="mb-2">在仪表板查看患者列表和总体情况</li>
+                                    <li class="mb-2">点击患者ID查看详细信息和历史评估</li>
+                                    <li class="mb-2">点击"开始对话"为患者进行新的评估</li>
+                                    <li>查看评估报告并获取干预建议</li>
+                                </ol>
+                                <div class="text-center mt-4">
+                                    <a href="{% url 'caregiver_dashboard' %}" class="btn btn-success">
+                                        <i class="fas fa-user-md"></i> 进入仪表板
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.circle-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.circle-icon i {
+    font-size: 2rem;
+}
+</style>
+{% endblock %}

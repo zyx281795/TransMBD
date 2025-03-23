@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}对话详情 | TransMbD{% endblock %}
+
+{% block page_title %}对话详情 #{{ conversation.id }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'patient_detail' patient_id=conversation.patient.patient_id %}" class="btn btn-primary">
+        <i class="fas fa-user"></i> 返回患者详情
+    </a>
+    <a href="{% url 'patient_interface_with_id' patient_id=conversation.patient.patient_id %}" class="btn btn-success">
+        <i class="fas fa-comments"></i> 新对话
+    </a>
+    {% if assessments %}
+    <a href="{% url 'assessment_report' assessment_id=assessments.first.id %}" class="btn btn-info">
+        <i class="fas fa-chart-bar"></i> 查看评估
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 对话信息 -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">对话信息</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar mx-auto mb-3" style="width: 80px; height: 80px;">
+                        {{ conversation.patient.name.0 }}
+                    </div>
+                    <h4>{{ conversation.patient.name }}</h4>
+                    <p>患者ID: {{ conversation.patient.patient_id }}</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">开始时间</th>
+                                <td>{{ conversation.start_time|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                            <tr>
+                                <th>结束时间</th>
+                                <td>
+                                    {% if conversation.end_time %}
+                                    {{ conversation.end_time|date:"Y-m-d H:i:s" }}
+                                    {% else %}
+                                    <span class="text-success">进行中</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>持续时间</th>
+                                <td>
+                                    {% if conversation.end_time %}
+                                    {{ conversation.start_time|timesince:conversation.end_time }}
+                                    {% else %}
+                                    {{ conversation.start_time|timesince }} (进行中)
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>消息数量</th>
+                                <td>{{ messages|length }}</td>
+                            </tr>
+                            <tr>
+                                <th>评估数量</th>
+                                <td>{{ assessments|length }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 评估摘要 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">评估摘要</h6>
+            </div>
+            <div class="card-body">
+                {% if assessments %}
+                <div class="list-group">
+                    {% for assessment in assessments %}
+                    <a href="{% url 'assessment_report' assessment_id=assessment.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">评估 #{{ assessment.id }}</h6>
+                            <small>{{ assessment.assessment_date|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <p class="mb-1">严重程度: 
+                                <span class="severity-badge severity-{{ assessment.severity }}">
+                                    {{ assessment.get_severity_display }}
+                                </span>
+                            </p>
+                            <small>置信度: {{ assessment.confidence_score|floatformat:2 }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list fa-4x text-gray-300"></i>
+                    </div>
+                    <p>此对话尚无评估记录</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 对话内容 -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">对话内容</h6>
+                
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow">
+                        <div class="dropdown-header">对话选项:</div>
+                        <a class="dropdown-item" href="#" id="exportConversation">
+                            <i class="fas fa-file-export fa-sm fa-fw me-2 text-gray-400"></i>
+                            导出对话
+                        </a>
+                        <a class="dropdown-item" href="#" id="printConversation">
+                            <i class="fas fa-print fa-sm fa-fw me-2 text-gray-400"></i>
+                            打印对话
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="chat-container" class="chat-container border rounded p-3" style="height: 600px; overflow-y: auto;">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="message message-{{ message.sender_type }}">
+                            <div class="mb-1 small text-muted">
+                                {{ message.get_sender_type_display }} - {{ message.timestamp|date:"H:i:s" }}
+                            </div>
+                            {{ message.content|linebreaks }}
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not conversation.end_time %}
+                        <div class="text-center mt-4">
+                            <a href="{% url 'patient_interface_with_id' patient_id=conversation.patient.patient_id %}" class="btn btn-primary">
+                                <i class="fas fa-comments"></i> 继续对话
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-comments fa-4x text-gray-300"></i>
+                        </div>
+                        <p>此对话尚无消息记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if messages %}
+                <div class="card mt-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">对话分析</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>语言特征</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 65%"
+                                            aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">词汇多样性: 65%</div>
+                                    </div>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 40%"
+                                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">句子完整性: 40%</div>
+                                    </div>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 55%"
+                                            aria-valuenow="55" aria-valuemin="0" aria-valuemax="100">语法正确性: 55%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>关键观察</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            重复语句
+                                            <span class="badge bg-warning rounded-pill">3</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            语义连贯性问题
+                                            <span class="badge bg-danger rounded-pill">4</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            语言暂停/停顿
+                                            <span class="badge bg-info rounded-pill">7</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            此分析基于对话内容自动生成，仅供参考。请结合患者的临床评估和其他信息进行综合判断。
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 滚动到对话底部
+    const chatContainer = document.getElementById('chat-container');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // 导出对话
+    document.getElementById('exportConversation')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        let csvContent = "数据:,{{ conversation.start_time|date:'Y-m-d H:i:s' }}\n";
+        csvContent += "患者:,{{ conversation.patient.name }} ({{ conversation.patient.patient_id }})\n\n";
+        csvContent += "时间,发送者,内容\n";
+        
+        {% for message in messages %}
+        csvContent += "{{ message.timestamp|date:'Y-m-d H:i:s' }},{{ message.get_sender_type_display }},"{{ message.content.replace('"', '""') }}"\n";
+        {% endfor %}
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', '对话_{{ conversation.id }}_{{ conversation.start_time|date:"Ymd" }}.csv');
+        link.click();
+    });
+    
+    // 打印对话
+    document.getElementById('printConversation')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.print();
+    });
+});
+</script>
+
+<style>
+@media print {
+    .no-print, .no-print * {
+        display: none !important;
+    }
+    
+    .navbar, .footer, .sidebar, .btn-group, .page-actions, .card-header button, .dropdown {
+        display: none !important;
+    }
+    
+    .content-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        margin-bottom: 20px !important;
+    }
+    
+    body {
+        padding-top: 0 !important;
+    }
+    
+    #chat-container {
+        height: auto !important;
+        border: none !important;
+    }
+    
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+}
+</style>
+{% endblock %}

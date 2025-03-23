@@ -1,0 +1,787 @@
+{% extends 'base.html' %}
+
+{% block title %}患者进展 | TransMbD{% endblock %}
+
+{% block page_title %}患者进展: {{ patient.name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'patient_detail' patient_id=patient.patient_id %}" class="btn btn-primary">
+        <i class="fas fa-user"></i> 返回患者详情
+    </a>
+    <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-success">
+        <i class="fas fa-comments"></i> 开始对话
+    </a>
+    <a href="{% url 'export_assessment_data' patient_id=patient.patient_id %}" class="btn btn-info">
+        <i class="fas fa-file-export"></i> 导出数据
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- 进展概览 -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            总评估次数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ assessments|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            首次评估日期
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% with first_assessment=assessments.first %}
+                            {% if first_assessment %}
+                            {{ first_assessment.assessment_date|date:"Y-m-d" }}
+                            {% else %}
+                            --
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            最新严重程度
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% with latest_assessment=assessments.last %}
+                            {% if latest_assessment %}
+                            {{ latest_assessment.get_severity_display }}
+                            {% else %}
+                            --
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-diagnoses fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            评估区间
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% with first_assessment=assessments.first latest_assessment=assessments.last %}
+                            {% if first_assessment and latest_assessment %}
+                            {{ first_assessment.assessment_date|timesince:latest_assessment.assessment_date }}
+                            {% else %}
+                            --
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 总体严重度趋势 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">总体严重度趋势</h6>
+        <div class="dropdown no-arrow">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end shadow">
+                <div class="dropdown-header">图表选项:</div>
+                <a class="dropdown-item" href="#" id="toggleLiveUpdate">
+                    <i class="fas fa-sync-alt fa-sm fa-fw me-2 text-gray-400"></i>
+                    实时更新
+                </a>
+                <a class="dropdown-item" href="#" id="showAnnotations">
+                    <i class="fas fa-sticky-note fa-sm fa-fw me-2 text-gray-400"></i>
+                    显示注释
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" id="downloadSeverityChart">
+                    <i class="fas fa-download fa-sm fa-fw me-2 text-gray-400"></i>
+                    下载图表
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if assessments|length > 1 %}
+        <div class="chart-area">
+            <canvas id="severityTrendChart"></canvas>
+        </div>
+        <hr>
+        <div class="text-center small mt-3">
+            <span class="me-2">
+                <i class="fas fa-circle text-success"></i> 正常 (0.0-0.2)
+            </span>
+            <span class="me-2">
+                <i class="fas fa-circle text-warning"></i> 轻度 (0.2-0.5)
+            </span>
+            <span class="me-2">
+                <i class="fas fa-circle text-info"></i> 中度 (0.5-0.75)
+            </span>
+            <span class="me-2">
+                <i class="fas fa-circle text-danger"></i> 重度 (0.75-1.0)
+            </span>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-chart-line fa-4x text-gray-300"></i>
+            </div>
+            <p>需要至少两次评估才能生成趋势图表。</p>
+            <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-primary">
+                <i class="fas fa-comments"></i> 开始对话
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 认知维度趋势 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">认知维度趋势</h6>
+    </div>
+    <div class="card-body">
+        {% if assessments|length > 1 %}
+        <div class="chart-area">
+            <canvas id="dimensionTrendChart"></canvas>
+        </div>
+        <hr>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">认知维度变化率</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>认知维度</th>
+                                        <th>30天变化率</th>
+                                        <th>趋势</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>记忆力</td>
+                                        <td id="memory-change">计算中...</td>
+                                        <td id="memory-trend"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>方向感</td>
+                                        <td id="orientation-change">计算中...</td>
+                                        <td id="orientation-trend"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>语言能力</td>
+                                        <td id="language-change">计算中...</td>
+                                        <td id="language-trend"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>注意力</td>
+                                        <td id="attention-change">计算中...</td>
+                                        <td id="attention-trend"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>问题解决</td>
+                                        <td id="problemsolving-change">计算中...</td>
+                                        <td id="problemsolving-trend"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">维度相关性</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-chart-bar fa-4x text-gray-300"></i>
+            </div>
+            <p>需要至少两次评估才能生成趋势图表。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 评估历史 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">评估历史</h6>
+    </div>
+    <div class="card-body">
+        {% if assessments %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="assessmentTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>严重程度</th>
+                        <th>总分</th>
+                        <th>记忆力</th>
+                        <th>方向感</th>
+                        <th>语言能力</th>
+                        <th>注意力</th>
+                        <th>问题解决</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assessment in assessments %}
+                    <tr class="{% if assessment.severity == 'severe' %}table-danger{% elif assessment.severity == 'moderate' %}table-warning{% elif assessment.severity == 'mild' %}table-info{% else %}table-success{% endif %}">
+                        <td>{{ assessment.assessment_date|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <span class="severity-badge severity-{{ assessment.severity }}">
+                                {{ assessment.get_severity_display }}
+                            </span>
+                        </td>
+                        <td>{{ assessment.detailed_results.severity_score|floatformat:2 }}</td>
+                        <td>{{ assessment.detailed_results.dimension_scores.memory|floatformat:2 }}</td>
+                        <td>{{ assessment.detailed_results.dimension_scores.orientation|floatformat:2 }}</td>
+                        <td>{{ assessment.detailed_results.dimension_scores.language|floatformat:2 }}</td>
+                        <td>{{ assessment.detailed_results.dimension_scores.attention|floatformat:2 }}</td>
+                        <td>{{ assessment.detailed_results.dimension_scores.problem_solving|floatformat:2 }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'assessment_report' assessment_id=assessment.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-file-alt"></i> 报告
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-clipboard-list fa-4x text-gray-300"></i>
+            </div>
+            <p>暂无评估记录。开始与患者对话以生成评估。</p>
+            <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-primary">
+                <i class="fas fa-comments"></i> 开始对话
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if assessments|length > 1 %}
+// 准备图表数据
+const dates = {{ dates|safe }};
+const severityScores = {{ severity_scores|safe }};
+
+// 认知维度数据
+const dimensionNames = ['记忆力', '方向感', '语言能力', '注意力', '问题解决'];
+const dimensionData = {{ dimension_data|safe }};
+
+// 根据严重程度得分确定数据点的背景色
+const bgColors = severityScores.map(score => {
+    if (score < 0.2) return 'rgba(28, 200, 138, 0.8)';  // 正常 - 绿色
+    if (score < 0.5) return 'rgba(246, 194, 62, 0.8)';  // 轻度 - 黄色
+    if (score < 0.75) return 'rgba(54, 185, 204, 0.8)'; // 中度 - 蓝色
+    return 'rgba(231, 74, 59, 0.8)';                    // 重度 - 红色
+});
+
+// 创建总体严重度趋势图表
+const severityCtx = document.getElementById('severityTrendChart').getContext('2d');
+const severityTrendChart = new Chart(severityCtx, {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: '严重程度得分',
+            data: severityScores,
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            borderColor: 'rgba(78, 115, 223, 1)',
+            pointBackgroundColor: bgColors,
+            pointBorderColor: bgColors,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+                time: {
+                    unit: 'date'
+                },
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    maxTicksLimit: 7
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    min: 0,
+                    max: 1,
+                    stepSize: 0.2,
+                    callback: function(value) {
+                        return value.toFixed(1);
+                    }
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }],
+        },
+        legend: {
+            display: false
+        },
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    const score = parseFloat(tooltipItem.yLabel).toFixed(2);
+                    let severity = '正常';
+                    if (score >= 0.75) severity = '重度';
+                    else if (score >= 0.5) severity = '中度';
+                    else if (score >= 0.2) severity = '轻度';
+                    
+                    return `严重程度: ${severity} (${score})`;
+                }
+            }
+        },
+        // 添加严重程度阈值线
+        annotation: {
+            annotations: [
+                {
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y-axis-0',
+                    value: 0.2,
+                    borderColor: 'rgba(246, 194, 62, 0.5)',
+                    borderWidth: 2,
+                    label: {
+                        enabled: true,
+                        content: '轻度阈值',
+                        position: 'right',
+                        backgroundColor: 'rgba(246, 194, 62, 0.5)'
+                    }
+                },
+                {
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y-axis-0',
+                    value: 0.5,
+                    borderColor: 'rgba(54, 185, 204, 0.5)',
+                    borderWidth: 2,
+                    label: {
+                        enabled: true,
+                        content: '中度阈值',
+                        position: 'right',
+                        backgroundColor: 'rgba(54, 185, 204, 0.5)'
+                    }
+                },
+                {
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y-axis-0',
+                    value: 0.75,
+                    borderColor: 'rgba(231, 74, 59, 0.5)',
+                    borderWidth: 2,
+                    label: {
+                        enabled: true,
+                        content: '重度阈值',
+                        position: 'right',
+                        backgroundColor: 'rgba(231, 74, 59, 0.5)'
+                    }
+                }
+            ]
+        }
+    }
+});
+
+// 创建认知维度趋势图表
+const dimensionCtx = document.getElementById('dimensionTrendChart').getContext('2d');
+const dimensionTrendChart = new Chart(dimensionCtx, {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                label: '记忆力',
+                data: dimensionData.memory,
+                borderColor: 'rgba(28, 200, 138, 1)',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                pointBorderColor: 'rgba(28, 200, 138, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false
+            },
+            {
+                label: '方向感',
+                data: dimensionData.orientation,
+                borderColor: 'rgba(246, 194, 62, 1)',
+                backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                pointBackgroundColor: 'rgba(246, 194, 62, 1)',
+                pointBorderColor: 'rgba(246, 194, 62, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false
+            },
+            {
+                label: '语言能力',
+                data: dimensionData.language,
+                borderColor: 'rgba(54, 185, 204, 1)',
+                backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                pointBackgroundColor: 'rgba(54, 185, 204, 1)',
+                pointBorderColor: 'rgba(54, 185, 204, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false
+            },
+            {
+                label: '注意力',
+                data: dimensionData.attention,
+                borderColor: 'rgba(231, 74, 59, 1)',
+                backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                pointBackgroundColor: 'rgba(231, 74, 59, 1)',
+                pointBorderColor: 'rgba(231, 74, 59, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false
+            },
+            {
+                label: '问题解决',
+                data: dimensionData.problem_solving,
+                borderColor: 'rgba(133, 135, 150, 1)',
+                backgroundColor: 'rgba(133, 135, 150, 0.1)',
+                pointBackgroundColor: 'rgba(133, 135, 150, 1)',
+                pointBorderColor: 'rgba(133, 135, 150, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+                time: {
+                    unit: 'date'
+                },
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    maxTicksLimit: 7
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    min: 0,
+                    max: 1,
+                    stepSize: 0.2,
+                    callback: function(value) {
+                        return value.toFixed(1);
+                    }
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }],
+        },
+        legend: {
+            display: true,
+            position: 'top'
+        },
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    const datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                    return datasetLabel + ': ' + tooltipItem.yLabel.toFixed(2);
+                }
+            }
+        }
+    }
+});
+
+// 创建雷达图
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+const latestData = {
+    memory: dimensionData.memory[dimensionData.memory.length - 1],
+    orientation: dimensionData.orientation[dimensionData.orientation.length - 1],
+    language: dimensionData.language[dimensionData.language.length - 1],
+    attention: dimensionData.attention[dimensionData.attention.length - 1],
+    problem_solving: dimensionData.problem_solving[dimensionData.problem_solving.length - 1]
+};
+
+const previousData = {
+    memory: dimensionData.memory.length > 1 ? dimensionData.memory[dimensionData.memory.length - 2] : 0,
+    orientation: dimensionData.orientation.length > 1 ? dimensionData.orientation[dimensionData.orientation.length - 2] : 0,
+    language: dimensionData.language.length > 1 ? dimensionData.language[dimensionData.language.length - 2] : 0,
+    attention: dimensionData.attention.length > 1 ? dimensionData.attention[dimensionData.attention.length - 2] : 0,
+    problem_solving: dimensionData.problem_solving.length > 1 ? dimensionData.problem_solving[dimensionData.problem_solving.length - 2] : 0
+};
+
+const radarChart = new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+        labels: dimensionNames,
+        datasets: [
+            {
+                label: '当前评估',
+                data: [
+                    latestData.memory,
+                    latestData.orientation,
+                    latestData.language,
+                    latestData.attention,
+                    latestData.problem_solving
+                ],
+                backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointBorderColor: 'rgba(78, 115, 223, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5
+            },
+            {
+                label: '前次评估',
+                data: [
+                    previousData.memory,
+                    previousData.orientation,
+                    previousData.language,
+                    previousData.attention,
+                    previousData.problem_solving
+                ],
+                backgroundColor: 'rgba(133, 135, 150, 0.2)',
+                borderColor: 'rgba(133, 135, 150, 1)',
+                pointBackgroundColor: 'rgba(133, 135, 150, 1)',
+                pointBorderColor: 'rgba(133, 135, 150, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }
+        ]
+    },
+    options: {
+        maintainAspectRatio: false,
+        scale: {
+            ticks: {
+                beginAtZero: true,
+                max: 1,
+                stepSize: 0.2,
+                callback: function(value) {
+                    return value.toFixed(1);
+                }
+            }
+        },
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    const datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                    return datasetLabel + ': ' + tooltipItem.yLabel.toFixed(2);
+                }
+            }
+        }
+    }
+});
+
+// 计算30天变化率
+function calculateChanges() {
+    if (dimensionData.memory.length < 2) return;
+    
+    // 计算记忆力变化率
+    const memoryChange = calculateChange(dimensionData.memory);
+    document.getElementById('memory-change').textContent = `${(memoryChange * 100).toFixed(1)}%`;
+    document.getElementById('memory-trend').innerHTML = getTrendIcon(memoryChange);
+    
+    // 计算方向感变化率
+    const orientationChange = calculateChange(dimensionData.orientation);
+    document.getElementById('orientation-change').textContent = `${(orientationChange * 100).toFixed(1)}%`;
+    document.getElementById('orientation-trend').innerHTML = getTrendIcon(orientationChange);
+    
+    // 计算语言能力变化率
+    const languageChange = calculateChange(dimensionData.language);
+    document.getElementById('language-change').textContent = `${(languageChange * 100).toFixed(1)}%`;
+    document.getElementById('language-trend').innerHTML = getTrendIcon(languageChange);
+    
+    // 计算注意力变化率
+    const attentionChange = calculateChange(dimensionData.attention);
+    document.getElementById('attention-change').textContent = `${(attentionChange * 100).toFixed(1)}%`;
+    document.getElementById('attention-trend').innerHTML = getTrendIcon(attentionChange);
+    
+    // 计算问题解决变化率
+    const problemSolvingChange = calculateChange(dimensionData.problem_solving);
+    document.getElementById('problemsolving-change').textContent = `${(problemSolvingChange * 100).toFixed(1)}%`;
+    document.getElementById('problemsolving-trend').innerHTML = getTrendIcon(problemSolvingChange);
+}
+
+// 计算单个维度的变化率
+function calculateChange(data) {
+    if (data.length < 2) return 0;
+    
+    const latest = data[data.length - 1];
+    const previous = data[data.length - 2];
+    
+    if (previous === 0) return 0;
+    return (latest - previous) / previous;
+}
+
+// 获取趋势图标
+function getTrendIcon(change) {
+    if (change > 0.05) {
+        return '<i class="fas fa-arrow-up text-danger"></i> 恶化';
+    } else if (change < -0.05) {
+        return '<i class="fas fa-arrow-down text-success"></i> 改善';
+    } else {
+        return '<i class="fas fa-equals text-info"></i> 稳定';
+    }
+}
+
+// 初始化计算
+calculateChanges();
+
+// 图表交互事件
+document.getElementById('toggleLiveUpdate').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('实时更新功能将在患者进行新的评估时自动刷新图表。');
+});
+
+document.getElementById('showAnnotations').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('注释功能尚在开发中。');
+});
+
+document.getElementById('downloadSeverityChart').addEventListener('click', function(e) {
+    e.preventDefault();
+    const url = severityTrendChart.toBase64Image();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '{{ patient.name }}_严重度趋势.png';
+    link.click();
+});
+{% endif %}
+</script>
+{% endblock %}

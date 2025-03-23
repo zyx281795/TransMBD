@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TransMbD 失智监护辅助系统{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #6c757d;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fc;
+            padding-top: 60px;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 60px);
+            background-color: #fff;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark-color);
+            padding: 1rem;
+            font-weight: 500;
+        }
+        
+        .sidebar .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        
+        .content-wrapper {
+            padding: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: white;
+            border-top: 1px solid #e3e6f0;
+            text-align: center;
+        }
+        
+        /* Chat UI Styles */
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #f8f9fc;
+            border-radius: 0.35rem;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            max-width: 80%;
+        }
+        
+        .message-patient {
+            background-color: #e2f0fd;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message-system {
+            background-color: #f0f0f0;
+            margin-right: auto;
+        }
+        
+        /* Dashboard Styles */
+        .stat-card {
+            border-left: 0.25rem solid;
+            border-radius: 0.35rem;
+        }
+        
+        .stat-card.normal {
+            border-left-color: var(--success-color);
+        }
+        
+        .stat-card.mild {
+            border-left-color: var(--warning-color);
+        }
+        
+        .stat-card.moderate {
+            border-left-color: var(--info-color);
+        }
+        
+        .stat-card.severe {
+            border-left-color: var(--danger-color);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            color: #dddfeb;
+        }
+        
+        /* Severity Indicators */
+        .severity-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .severity-normal {
+            background-color: rgba(28, 200, 138, 0.2);
+            color: var(--success-color);
+        }
+        
+        .severity-mild {
+            background-color: rgba(246, 194, 62, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .severity-moderate {
+            background-color: rgba(54, 185, 204, 0.2);
+            color: var(--info-color);
+        }
+        
+        .severity-severe {
+            background-color: rgba(231, 74, 59, 0.2);
+            color: var(--danger-color);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                TransMbD <small class="text-secondary">失智监护辅助系统</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'patient_interface' %}">患者界面</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'caregiver_dashboard' %}">照护仪表板</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <span class="d-none d-lg-inline me-2">{{ user.username }}</span>
+                            <div class="avatar">{{ user.username.0 }}</div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow">
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
+                                个人资料
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>
+                                设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'admin:logout' %}">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
+                                退出登录
+                            </a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:login' %}">登录</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated and request.path != '/' and 'patient_interface' not in request.path %}
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar pt-2">
+                    <div class="text-center my-4">
+                        <div class="avatar mx-auto mb-2" style="width: 60px; height: 60px;">
+                            {{ user.username.0 }}
+                        </div>
+                        <div>{{ user.username }}</div>
+                        <div class="small text-muted">照护人员</div>
+                    </div>
+                    <hr class="my-2">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'caregiver_dashboard' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'caregiver_dashboard' %}">
+                                <i class="fas fa-fw fa-tachometer-alt"></i>
+                                仪表板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'add_patient' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'add_patient' %}">
+                                <i class="fas fa-fw fa-user-plus"></i>
+                                添加患者
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="my-2">
+                    <div class="px-3 py-2 small text-muted">
+                        <div>TransMbD 失智监护辅助系统</div>
+                        <div>版本: 1.0.0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9 col-lg-10">
+            {% else %}
+            <div class="col-12">
+            {% endif %}
+                <div class="content-wrapper">
+                    <!-- Page Heading -->
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800">{% block page_title %}{{ title }}{% endblock %}</h1>
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                    
+                    <!-- Page Content -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <span class="text-muted">© 2025 TransMbD 失智监护辅助系统. 版权所有.</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

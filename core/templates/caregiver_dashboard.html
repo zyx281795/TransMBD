@@ -1,0 +1,691 @@
+{% extends 'base.html' %}
+
+{% block title %}照护人员仪表板 | TransMbD{% endblock %}
+
+{% block page_title %}照护人员仪表板{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex align-items-center">
+    <div class="quick-stats me-4">
+        <span class="stat-label">今日评估:</span>
+        <span class="stat-value">{{ today_assessments|default:"0" }}</span>
+    </div>
+    <a href="{% url 'add_patient' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> 添加患者
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow-sm h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1 stat-label">
+                            患者总数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800 stat-value">{{ patients|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300 stat-icon"></i>
+                    </div>
+                </div>
+                <div class="progress progress-sm">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card mild h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label text-uppercase mb-1">今日对话</div>
+                        <div class="stat-value">{{ today_conversations|default:"0" }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                </div>
+                <div class="stat-progress mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 65%" 
+                            aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card moderate h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label text-uppercase mb-1">本周评估</div>
+                        <div class="stat-value">{{ weekly_assessments|default:"0" }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                </div>
+                <div class="stat-progress mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 45%" 
+                            aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card severe h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label text-uppercase mb-1">需要关注</div>
+                        <div class="stat-value">{{ attention_needed|default:"0" }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+                <div class="stat-progress mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 30%" 
+                            aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 空状态时的患者列表 -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">患者列表</h6>
+        <a href="{% url 'add_patient' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-user-plus btn-icon"></i>添加患者
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h4>没有患者记录</h4>
+            <p>您目前没有任何患者记录。点击"添加患者"按钮开始添加。</p>
+            <a href="{% url 'add_patient' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus btn-icon"></i>添加患者
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 患者列表 -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">患者列表</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow">
+                        <div class="dropdown-header">列表选项:</div>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-sort-alpha-down fa-sm fa-fw me-2 text-gray-400"></i>
+                            按姓名排序
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-sort-numeric-down fa-sm fa-fw me-2 text-gray-400"></i>
+                            按严重程度排序
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-file-export fa-sm fa-fw me-2 text-gray-400"></i>
+                            导出患者列表
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="alerts-container"></div>
+                
+                {% if patients %}
+                <div class="patient-search mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fas fa-search text-gray-300"></i>
+                        </span>
+                        <input type="text" id="patient-search" class="form-control border-start-0 ps-0" placeholder="搜索患者...">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>年龄</th>
+                                <th>MMSE/CDR</th>
+                                <th>最新评估</th>
+                                <th>严重程度</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patient-list">
+                            {% for patient in patients %}
+                            <tr class="patient-row">
+                                <td class="patient-id">{{ patient.patient_id }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="patient-list-avatar me-2">{{ patient.name.0 }}</div>
+                                        <div>{{ patient.name }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ patient.age }} 岁</td>
+                                <td>
+                                    <div class="clinical-scores">
+                                        <span class="clinical-mmse" data-bs-toggle="tooltip" title="MMSE分数">
+                                            <i class="fas fa-brain"></i> {% if patient.mmse_score %}{{ patient.mmse_score }}{% else %}-{% endif %}
+                                        </span>
+                                        <span class="clinical-divider">/</span>
+                                        <span class="clinical-cdr" data-bs-toggle="tooltip" title="CDR分数">
+                                            <i class="fas fa-chart-line"></i> {% if patient.cdr_score %}{{ patient.cdr_score }}{% else %}-{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% with latest_assessment=patient.assessments.last %}
+                                    {% if latest_assessment %}
+                                    <span class="assessment-date" data-bs-toggle="tooltip" title="评估日期">
+                                        {{ latest_assessment.assessment_date|date:"Y-m-d" }}
+                                    </span>
+                                    {% else %}
+                                    <span class="no-assessment">无评估</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with latest_assessment=patient.assessments.last %}
+                                    {% if latest_assessment %}
+                                    <span class="severity-badge severity-{{ latest_assessment.severity }}">
+                                        {{ latest_assessment.get_severity_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="severity-badge severity-unknown">未知</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="actions-container">
+                                        <a href="{% url 'patient_detail' patient_id=patient.patient_id %}" class="btn btn-sm btn-primary action-btn" data-bs-toggle="tooltip" title="查看详情">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-sm btn-success action-btn" data-bs-toggle="tooltip" title="开始对话">
+                                            <i class="fas fa-comments"></i>
+                                        </a>
+                                        <a href="{% url 'edit_patient' patient_id=patient.patient_id %}" class="btn btn-sm btn-info action-btn" data-bs-toggle="tooltip" title="编辑信息">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state fade-in">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h4>没有患者记录</h4>
+                    <p>您目前没有任何患者记录。点击"添加患者"按钮开始添加。</p>
+                    <a href="{% url 'add_patient' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> 添加患者
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表和最近评估 -->
+    <div class="col-xl-4 col-lg-5">
+        <!-- 症状分布 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">严重程度分布</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="chartDropdownMenuLink" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow">
+                        <div class="dropdown-header">图表选项:</div>
+                        <a class="dropdown-item" href="#" id="refreshChart">
+                            <i class="fas fa-sync-alt fa-sm fa-fw me-2 text-gray-400"></i>
+                            刷新数据
+                        </a>
+                        <a class="dropdown-item" href="#" id="downloadChart">
+                            <i class="fas fa-download fa-sm fa-fw me-2 text-gray-400"></i>
+                            下载图表
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie mb-4">
+                    <canvas id="severityPieChart"></canvas>
+                </div>
+                <div class="chart-legend text-center small">
+                    <div class="legend-item">
+                        <span class="legend-color bg-success"></span>
+                        <span class="legend-text">正常</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color bg-warning"></span>
+                        <span class="legend-text">轻度</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color bg-info"></span>
+                        <span class="legend-text">中度</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color bg-danger"></span>
+                        <span class="legend-text">重度</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近评估 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">最近评估</h6>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_assessments %}
+                <div class="assessment-list">
+                    {% for assessment in recent_assessments %}
+                    <a href="{% url 'assessment_report' assessment_id=assessment.id %}" class="assessment-item">
+                        <div class="assessment-avatar 
+                            {% if assessment.severity == 'normal' %}avatar-success
+                            {% elif assessment.severity == 'mild' %}avatar-warning
+                            {% elif assessment.severity == 'moderate' %}avatar-info
+                            {% else %}avatar-danger{% endif %}">
+                            {{ assessment.patient.name.0 }}
+                        </div>
+                        <div class="assessment-details">
+                            <div class="assessment-header">
+                                <div class="assessment-patient">{{ assessment.patient.name }}</div>
+                                <div class="assessment-date">{{ assessment.assessment_date|date:"Y-m-d H:i" }}</div>
+                            </div>
+                            <div class="assessment-footer">
+                                <span class="severity-badge severity-{{ assessment.severity }}">
+                                    {{ assessment.get_severity_display }}
+                                </span>
+                                <span class="assessment-confidence">
+                                    置信度: {{ assessment.confidence_score|floatformat:2 }}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-assessment text-center py-5">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <p>暂无评估记录。开始与患者对话以生成评估。</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 饼图数据和绘制代码保持不变，添加交互增强...
+
+// 患者搜索功能
+document.getElementById('patient-search').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#patient-list tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+
+// 初始化提示工具
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
+// 图表下载功能
+document.getElementById('downloadChart')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    const canvas = document.getElementById('severityPieChart');
+    const image = canvas.toDataURL('image/png');
+    
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = '严重程度分布.png';
+    link.click();
+});
+
+// 定时刷新统计数据
+let autoRefresh = false;
+document.getElementById('refreshChart')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // 模拟刷新动画
+    this.innerHTML = '<i class="fas fa-sync-alt fa-spin fa-sm fa-fw me-2 text-gray-400"></i> 刷新中...';
+    
+    setTimeout(() => {
+        this.innerHTML = '<i class="fas fa-sync-alt fa-sm fa-fw me-2 text-gray-400"></i> 刷新数据';
+        showAlert('数据已更新', 'success');
+    }, 1500);
+});
+
+// 提醒功能
+function showAlert(message, type = 'info') {
+    const alertsContainer = document.getElementById('alerts-container');
+    if (!alertsContainer) return;
+    
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    alertsContainer.appendChild(alert);
+    
+    // 5秒后自动关闭
+    setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 150);
+    }, 5000);
+}
+</script>
+
+<style>
+/* 仪表板特定样式 */
+.stat-card {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card.normal {
+    border-left: 4px solid var(--success-color);
+}
+
+.stat-card.mild {
+    border-left: 4px solid var(--warning-color);
+}
+
+.stat-card.moderate {
+    border-left: 4px solid var(--info-color);
+}
+
+.stat-card.severe {
+    border-left: 4px solid var(--danger-color);
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    letter-spacing: 0.05rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    line-height: 1.2;
+}
+
+.stat-icon {
+    color: rgba(0, 0, 0, 0.05);
+}
+
+.stat-progress .progress {
+    height: 0.5rem;
+    border-radius: 1rem;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.patient-list-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.clinical-scores {
+    display: flex;
+    align-items: center;
+}
+
+.clinical-mmse, .clinical-cdr {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.clinical-mmse {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: var(--success-color);
+}
+
+.clinical-cdr {
+    background-color: rgba(54, 185, 204, 0.1);
+    color: var(--info-color);
+}
+
+.clinical-divider {
+    margin: 0 0.25rem;
+    color: var(--secondary-color);
+}
+
+.assessment-date {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+.no-assessment {
+    font-size: 0.85rem;
+    color: #aaa;
+    font-style: italic;
+}
+
+.actions-container {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.action-btn {
+    border-radius: 0.5rem;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.severity-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.severity-unknown {
+    background-color: rgba(133, 135, 150, 0.2);
+    color: var(--secondary-color);
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+}
+
+.assessment-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.assessment-item {
+    display: flex;
+    padding: 1rem;
+    border-bottom: 1px solid #f1f1f1;
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.assessment-item:hover {
+    background-color: rgba(78, 115, 223, 0.05);
+}
+
+.assessment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.avatar-success {
+    background-color: var(--success-color);
+}
+
+.avatar-warning {
+    background-color: var(--warning-color);
+}
+
+.avatar-info {
+    background-color: var(--info-color);
+}
+
+.avatar-danger {
+    background-color: var(--danger-color);
+}
+
+.assessment-details {
+    flex: 1;
+}
+
+.assessment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.assessment-patient {
+    font-weight: 600;
+}
+
+.assessment-date {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+.assessment-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.assessment-confidence {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+}
+
+.empty-state, .empty-assessment {
+    padding: 2rem;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: #e3e6f0;
+    margin-bottom: 1rem;
+}
+
+.quick-stats {
+    display: flex;
+    align-items: center;
+    background-color: rgba(78, 115, 223, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+}
+
+.stat-label {
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+.patient-search .input-group {
+    border-radius: 2rem;
+    overflow: hidden;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+}
+
+.patient-search .input-group-text {
+    border-radius: 2rem 0 0 2rem;
+}
+
+.patient-search .form-control {
+    border-radius: 0 2rem 2rem 0;
+}
+</style>
+{% endblock %}

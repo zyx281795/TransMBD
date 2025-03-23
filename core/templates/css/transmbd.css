@@ -1,0 +1,580 @@
+/* 全局样式增强 */
+:root {
+    --primary-color: #4e73df;
+    --primary-light: #e8eeff;
+    --success-color: #1cc88a;
+    --warning-color: #f6c23e;
+    --info-color: #36b9cc;
+    --danger-color: #e74a3b;
+    --gray-100: #f8f9fc;
+    --gray-200: #eaecf4;
+    --gray-300: #dddfeb;
+    --gray-800: #5a5c69;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    --border-radius: 0.35rem;
+}
+
+body {
+    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f8f9fc;
+    color: #444;
+    line-height: 1.6;
+    padding-top: 64px; /* Exactly match the banner height */
+    margin: 0;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* 统计卡片优化 */
+.stat-card {
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card .card-body {
+    padding: 1.25rem;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--gray-800);
+    letter-spacing: 0.05rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 0;
+}
+
+.stat-icon {
+    opacity: 0.1;
+    font-size: 2rem;
+}
+
+.progress {
+    height: 0.5rem;
+    border-radius: 1rem;
+    margin-top: 0.75rem;
+    background-color: var(--gray-200);
+}
+
+/* 内容卡片优化 */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+}
+
+.card-header h6 {
+    font-weight: 700;
+    margin-bottom: 0;
+    color: var(--primary-color);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 空状态优化 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--gray-800);
+    margin-bottom: 1.5rem;
+}
+
+/* 按钮样式优化 */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 0.125rem 0.25rem rgba(78, 115, 223, 0.1);
+}
+
+.btn-primary:hover {
+    background-color: #4262c5;
+    border-color: #4262c5;
+    transform: translateY(-1px);
+}
+
+.btn-icon {
+    margin-right: 0.375rem;
+}
+
+/* 图表容器优化 */
+.chart-container {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+}
+
+/* 页脚优化 */
+footer {
+    margin-top: auto;
+    padding: 1rem;
+    font-size: 0.85rem;
+    color: var(--gray-800);
+    background-color: white;
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+/* 患者列表项优化 */
+.patient-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.patient-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.patient-item:hover {
+    background-color: var(--gray-100);
+}
+
+.patient-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.patient-details {
+    flex-grow: 1;
+}
+
+.patient-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.patient-info {
+    font-size: 0.85rem;
+    color: var(--gray-800);
+}
+
+.patient-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Main banner */
+.main-banner {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030;
+    height: 64px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.banner-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+}
+
+/* Brand section */
+.banner-brand {
+    display: flex;
+    align-items: center;
+}
+
+.brand-icon {
+    color: #4e73df;
+    font-size: 24px;
+    margin-right: 10px;
+    transition: transform 0.3s ease;
+}
+
+.banner-brand:hover .brand-icon {
+    transform: rotate(5deg);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.brand-name {
+    font-weight: 700;
+    font-size: 18px;
+    color: #4e73df;
+}
+
+.brand-description {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Navigation section */
+.banner-nav {
+    flex-grow: 1;
+    margin: 0 40px;
+}
+
+.nav-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    margin: 0 5px;
+    position: relative;
+}
+
+.nav-item a {
+    display: block;
+    color: #5a5c69;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-item a:hover {
+    background-color: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+}
+
+.nav-item.active a {
+    color: #4e73df;
+    background-color: rgba(78, 115, 223, 0.1);
+    font-weight: 600;
+}
+
+/* User section */
+.banner-user {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.user-info:hover {
+    background-color: rgba(78, 115, 223, 0.1);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #4e73df;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #5a5c69;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+    border-radius: 0.35rem;
+    padding: 0.5rem 0;
+    display: none;
+    min-width: 10rem;
+    z-index: 1000;
+}
+
+.user-info:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 0.5rem 1.5rem;
+    color: #3a3b45;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fc;
+    color: #4e73df;
+}
+
+.login-link {
+    padding: 8px 16px;
+    color: #4e73df;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.login-link:hover {
+    background-color: rgba(78, 115, 223, 0.1);
+}
+
+/* Adjust main container to account for fixed header */
+.main-container {
+    padding-top: 20px; /* Add some spacing below the banner */
+    width: 100%;
+}
+
+/* Make sure content wrapper doesn't add additional spacing */
+.content-wrapper {
+    padding-top: 0; /* Override any existing padding */
+}
+
+/* 侧边栏优化 */
+.sidebar {
+    min-height: calc(100vh - 64px);
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+    padding-top: 1rem;
+    top: 64px; /* Should match the banner height */
+    position: fixed;
+    height: calc(100vh - 64px); /* Viewport height minus banner height */
+    width: 100%;
+    max-width: 225px;
+    z-index: 1020;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.sidebar-user {
+    margin-bottom: 1rem;
+}
+
+.sidebar-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.8rem;
+    margin: 0 auto 0.75rem;
+}
+
+.sidebar-role {
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+}
+
+.sidebar-divider {
+    margin: 0.5rem 1rem;
+    border-color: #e3e6f0;
+}
+
+.sidebar-nav {
+    padding: 0.5rem 0;
+}
+
+.sidebar-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: var(--light-color);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: rgba(78, 115, 223, 0.1);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+}
+
+.sidebar-icon {
+    width: 1.25rem;
+    margin-right: 0.75rem;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+}
+
+/* 响应式优化 */
+@media (max-width: 991.98px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .sidebar {
+        margin-left: -225px;
+        transition: margin 0.25s ease;
+    }
+    
+    .sidebar.toggled {
+        margin-left: 0;
+    }
+    
+    body {
+        padding-top: 56px; /* Match the reduced banner height on scroll */
+    }
+    
+    .sidebar {
+        top: 56px;
+        height: calc(100vh - 56px);
+    }
+    
+    .banner-nav {
+        display: none;
+    }
+    
+    /* Add mobile menu toggle button */
+    .mobile-menu-toggle {
+        display: block;
+    }
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Force visible banner */
+.main-banner {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1040 !important;
+}
+
+/* 页面内容区域 */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-content {
+    margin-bottom: 2rem;
+}

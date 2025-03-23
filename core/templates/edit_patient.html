@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}编辑患者 | TransMbD{% endblock %}
+
+{% block page_title %}编辑患者: {{ patient.name }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'patient_detail' patient_id=patient.patient_id %}" class="btn btn-primary">
+    <i class="fas fa-arrow-left"></i> 返回患者详情
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">编辑患者信息</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.patient_id.id_for_label }}" class="form-label">
+                                    {{ form.patient_id.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.patient_id }}
+                                {% if form.patient_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.patient_id.errors.0 }}
+                                </div>
+                                {% endif %}
+                                {% if form.patient_id.help_text %}
+                                <small class="form-text text-muted">{{ form.patient_id.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    {{ form.name.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.age.id_for_label }}" class="form-label">
+                                    {{ form.age.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.age }}
+                                {% if form.age.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.age.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.gender.id_for_label }}" class="form-label">
+                                    {{ form.gender.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.gender }}
+                                {% if form.gender.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.gender.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">临床测验数据</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.mmse_score.id_for_label }}" class="form-label">
+                                            {{ form.mmse_score.label }}
+                                        </label>
+                                        {{ form.mmse_score }}
+                                        {% if form.mmse_score.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.mmse_score.errors.0 }}
+                                        </div>
+                                        {% endif %}
+                                        {% if form.mmse_score.help_text %}
+                                        <small class="form-text text-muted">{{ form.mmse_score.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.cdr_score.id_for_label }}" class="form-label">
+                                            {{ form.cdr_score.label }}
+                                        </label>
+                                        {{ form.cdr_score }}
+                                        {% if form.cdr_score.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.cdr_score.errors.0 }}
+                                        </div>
+                                        {% endif %}
+                                        {% if form.cdr_score.help_text %}
+                                        <small class="form-text text-muted">{{ form.cdr_score.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                更新临床测验数据有助于系统更准确地评估患者的状态，建议定期更新MMSE和CDR分数。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'patient_detail' patient_id=patient.patient_id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 取消
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存更改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">患者记录</h6>
+                <span class="badge bg-primary">注册于 {{ patient.date_registered|date:"Y-m-d" }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">评估历史</h5>
+                                <p class="mb-0">累计评估次数: {{ patient.assessments.count }}</p>
+                                <p class="mb-0">
+                                    最近评估: 
+                                    {% with latest_assessment=patient.assessments.last %}
+                                    {% if latest_assessment %}
+                                    {{ latest_assessment.assessment_date|date:"Y-m-d" }}
+                                    {% else %}
+                                    暂无评估
+                                    {% endif %}
+                                    {% endwith %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">对话历史</h5>
+                                <p class="mb-0">累计对话次数: {{ patient.conversations.count }}</p>
+                                <p class="mb-0">
+                                    最近对话: 
+                                    {% with latest_conversation=patient.conversations.last %}
+                                    {% if latest_conversation %}
+                                    {{ latest_conversation.start_time|date:"Y-m-d" }}
+                                    {% else %}
+                                    暂无对话
+                                    {% endif %}
+                                    {% endwith %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'patient_progress' patient_id=patient.patient_id %}" class="btn btn-info">
+                        <i class="fas fa-chart-line"></i> 查看完整进展
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+django==4.2.11
+django-crispy-forms==2.1.0
+crispy-bootstrap5==0.7
+python-dotenv==1.0.1
+gunicorn==21.2.0
+transformers==4.40.0
+torch==2.2.1
+numpy==1.26.3
+pandas==2.2.0
+scikit-learn==1.4.0
+matplotlib==3.8.2
+seaborn==0.13.1
+plotly==5.19.0
+SpeechRecognition==3.10.1  # 用于语音识别
+pyaudio==0.2.14  # 用于音频捕获

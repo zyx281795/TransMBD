@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+
+{% block title %}患者详情 | TransMbD{% endblock %}
+
+{% block page_title %}患者详情: {{ patient.name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-primary">
+        <i class="fas fa-comments"></i> 开始对话
+    </a>
+    <a href="{% url 'patient_progress' patient_id=patient.patient_id %}" class="btn btn-info">
+        <i class="fas fa-chart-line"></i> 查看进展
+    </a>
+    <a href="{% url 'edit_patient' patient_id=patient.patient_id %}" class="btn btn-secondary">
+        <i class="fas fa-edit"></i> 编辑信息
+    </a>
+    <a href="{% url 'export_assessment_data' patient_id=patient.patient_id %}" class="btn btn-success">
+        <i class="fas fa-file-export"></i> 导出数据
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 患者基本信息 -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">基本信息</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2rem;">
+                        {{ patient.name.0 }}
+                    </div>
+                    <h4>{{ patient.name }}</h4>
+                    {% with latest_assessment=patient.assessments.last %}
+                    {% if latest_assessment %}
+                    <span class="severity-badge severity-{{ latest_assessment.severity }}">
+                        {{ latest_assessment.get_severity_display }}
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>患者ID</th>
+                                <td>{{ patient.patient_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>年龄</th>
+                                <td>{{ patient.age }}</td>
+                            </tr>
+                            <tr>
+                                <th>性别</th>
+                                <td>{{ patient.get_gender_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>注册日期</th>
+                                <td>{{ patient.date_registered|date:"Y-m-d" }}</td>
+                            </tr>
+                            <tr>
+                                <th>负责人员</th>
+                                <td>{{ patient.caregiver.username|default:"未分配" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 临床测验数据 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">临床测验数据</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3 bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">MMSE</h5>
+                                <p class="display-4">{{ patient.mmse_score|default:"--" }}</p>
+                                <p class="small text-muted">简易智能状态测验分数 (0-30)</p>
+                                <p class="small text-muted">越高越好</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">CDR</h5>
+                                <p class="display-4">{{ patient.cdr_score|default:"--" }}</p>
+                                <p class="small text-muted">临床失智症评估工作单 (0-3)</p>
+                                <p class="small text-muted">0为正常，3为重度失智</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近评估 -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">最近评估</h6>
+                <a href="{% url 'patient_progress' patient_id=patient.patient_id %}" class="btn btn-sm btn-primary">
+                    查看全部
+                </a>
+            </div>
+            <div class="card-body">
+                {% if assessments %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>严重程度</th>
+                                <th>置信度</th>
+                                <th>分析</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assessment in assessments|slice:":5" %}
+                            <tr>
+                                <td>{{ assessment.assessment_date|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <span class="severity-badge severity-{{ assessment.severity }}">
+                                        {{ assessment.get_severity_display }}
+                                    </span>
+                                </td>
+                                <td>{{ assessment.confidence_score|floatformat:2 }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'assessment_report' assessment_id=assessment.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-chart-bar"></i> 查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list fa-4x text-gray-300"></i>
+                    </div>
+                    <p>暂无评估记录。开始与患者对话以生成评估。</p>
+                    <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-primary">
+                        <i class="fas fa-comments"></i> 开始对话
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 最近对话 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">最近对话</h6>
+            </div>
+            <div class="card-body">
+                {% if conversations %}
+                <div class="list-group">
+                    {% for conversation in conversations %}
+                    <a href="{% url 'conversation_detail' conversation_id=conversation.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">对话 #{{ conversation.id }}</h6>
+                            <small>{{ conversation.start_time|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <div class="d-flex w-100 justify-content-between">
+                            <p class="mb-1">
+                                消息: {{ conversation.messages.count }} | 
+                                评估: {{ conversation.assessments.count }}
+                            </p>
+                            <small>
+                                {% if conversation.end_time %}
+                                已结束 ({{ conversation.start_time|timesince:conversation.end_time }})
+                                {% else %}
+                                <span class="text-success">进行中</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-comments fa-4x text-gray-300"></i>
+                    </div>
+                    <p>暂无对话记录。</p>
+                    <a href="{% url 'patient_interface_with_id' patient_id=patient.patient_id %}" class="btn btn-primary">
+                        <i class="fas fa-comments"></i> 开始对话
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近趋势 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">症状趋势</h6>
+    </div>
+    <div class="card-body">
+        {% if assessments|length > 1 %}
+        <div class="chart-area">
+            <canvas id="symptomTrendsChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-chart-line fa-4x text-gray-300"></i>
+            </div>
+            <p>需要至少两次评估才能生成趋势图表。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if assessments|length > 1 %}
+// 准备症状趋势数据
+const dates = [
+    {% for assessment in assessments %}
+    "{{ assessment.assessment_date|date:"m/d" }}",
+    {% endfor %}
+];
+
+const severityScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.severity_score|default:"0" }},
+    {% endfor %}
+];
+
+// 各维度数据
+const memoryScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.dimension_scores.memory|default:"0" }},
+    {% endfor %}
+];
+
+const orientationScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.dimension_scores.orientation|default:"0" }},
+    {% endfor %}
+];
+
+const languageScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.dimension_scores.language|default:"0" }},
+    {% endfor %}
+];
+
+const attentionScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.dimension_scores.attention|default:"0" }},
+    {% endfor %}
+];
+
+const problemSolvingScores = [
+    {% for assessment in assessments %}
+    {{ assessment.detailed_results.dimension_scores.problem_solving|default:"0" }},
+    {% endfor %}
+];
+
+// 创建趋势图表
+const ctx = document.getElementById('symptomTrendsChart').getContext('2d');
+const symptomTrendsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                label: '总体严重度',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointBorderColor: 'rgba(78, 115, 223, 1)',
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: severityScores,
+                fill: true,
+            },
+            {
+                label: '记忆力',
+                borderColor: 'rgba(28, 200, 138, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                pointBorderColor: 'rgba(28, 200, 138, 1)',
+                pointHoverRadius: 5,
+                data: memoryScores,
+                fill: false,
+            },
+            {
+                label: '方向感',
+                borderColor: 'rgba(246, 194, 62, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(246, 194, 62, 1)',
+                pointBorderColor: 'rgba(246, 194, 62, 1)',
+                pointHoverRadius: 5,
+                data: orientationScores,
+                fill: false,
+            },
+            {
+                label: '语言能力',
+                borderColor: 'rgba(54, 185, 204, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(54, 185, 204, 1)',
+                pointBorderColor: 'rgba(54, 185, 204, 1)',
+                pointHoverRadius: 5,
+                data: languageScores,
+                fill: false,
+            },
+            {
+                label: '注意力',
+                borderColor: 'rgba(231, 74, 59, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(231, 74, 59, 1)',
+                pointBorderColor: 'rgba(231, 74, 59, 1)',
+                pointHoverRadius: 5,
+                data: attentionScores,
+                fill: false,
+            },
+            {
+                label: '问题解决',
+                borderColor: 'rgba(133, 135, 150, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(133, 135, 150, 1)',
+                pointBorderColor: 'rgba(133, 135, 150, 1)',
+                pointHoverRadius: 5,
+                data: problemSolvingScores,
+                fill: false,
+            }
+        ],
+    },
+    options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+                time: {
+                    unit: 'date'
+                },
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    maxTicksLimit: 7
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    min: 0,
+                    max: 1,
+                    stepSize: 0.2,
+                    callback: function(value) {
+                        return value.toFixed(1);
+                    }
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }],
+        },
+        legend: {
+            display: true,
+            position: 'top'
+        },
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                    return datasetLabel + ': ' + tooltipItem.yLabel.toFixed(2);
+                }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

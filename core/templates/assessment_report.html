@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+
+{% block title %}评估报告 | TransMbD{% endblock %}
+
+{% block page_title %}评估报告 - {{ assessment.assessment_date|date:"Y-m-d H:i" }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'patient_detail' patient_id=patient.patient_id %}" class="btn btn-primary">
+        <i class="fas fa-user"></i> 返回患者详情
+    </a>
+    <a href="{% url 'conversation_detail' conversation_id=assessment.conversation.id %}" class="btn btn-info">
+        <i class="fas fa-comments"></i> 查看相关对话
+    </a>
+    <button class="btn btn-success" onclick="window.print()">
+        <i class="fas fa-print"></i> 打印报告
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 报告摘要 -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">评估摘要</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    {% if assessment.severity == 'normal' %}
+                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; background-color: #1cc88a;">
+                        <i class="fas fa-check fa-3x text-white mt-3"></i>
+                    </div>
+                    {% elif assessment.severity == 'mild' %}
+                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; background-color: #f6c23e;">
+                        <i class="fas fa-exclamation fa-3x text-white mt-3"></i>
+                    </div>
+                    {% elif assessment.severity == 'moderate' %}
+                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; background-color: #36b9cc;">
+                        <i class="fas fa-exclamation-circle fa-3x text-white mt-3"></i>
+                    </div>
+                    {% else %}
+                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; background-color: #e74a3b;">
+                        <i class="fas fa-exclamation-triangle fa-3x text-white mt-3"></i>
+                    </div>
+                    {% endif %}
+                    <h4>{{ patient.name }}</h4>
+                    <span class="severity-badge severity-{{ assessment.severity }} px-3 py-2" style="font-size: 1rem;">
+                        {{ assessment.get_severity_display }}
+                    </span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">评估日期</th>
+                                <td>{{ assessment.assessment_date|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>严重程度</th>
+                                <td>
+                                    {{ assessment.get_severity_display }}
+                                    ({{ assessment.detailed_results.severity_score|floatformat:2 }})
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>置信度</th>
+                                <td>{{ assessment.confidence_score|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <th>评估ID</th>
+                                <td>#{{ assessment.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>相关对话</th>
+                                <td>
+                                    <a href="{% url 'conversation_detail' conversation_id=assessment.conversation.id %}">
+                                        #{{ assessment.conversation.id }}
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 患者信息 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">患者信息</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">患者ID</th>
+                                <td>{{ patient.patient_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>姓名</th>
+                                <td>{{ patient.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>年龄</th>
+                                <td>{{ patient.age }}</td>
+                            </tr>
+                            <tr>
+                                <th>性别</th>
+                                <td>{{ patient.get_gender_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>MMSE分数</th>
+                                <td>{% if patient.mmse_score %}{{ patient.mmse_score }}{% else %}未记录{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <th>CDR分数</th>
+                                <td>{% if patient.cdr_score %}{{ patient.cdr_score }}{% else %}未记录{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详细报告 -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">失智症评估报告</h6>
+            </div>
+            <div class="card-body">
+                <div class="report-content mb-4 p-4 border rounded">
+                    {{ report|linebreaks }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 维度评分 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">认知维度评分</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <canvas id="dimensionBarChart"></canvas>
+                </div>
+                <hr>
+                <div class="table-responsive mt-4">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>认知维度</th>
+                                <th>评分</th>
+                                <th>风险等级</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with dimension_scores=assessment.detailed_results.dimension_scores %}
+                            <tr>
+                                <td>记忆力</td>
+                                <td>{{ dimension_scores.memory|floatformat:2 }}</td>
+                                <td>
+                                    {% if dimension_scores.memory < 0.3 %}
+                                    <span class="badge bg-success">低</span>
+                                    {% elif dimension_scores.memory < 0.6 %}
+                                    <span class="badge bg-warning">中</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">高</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>方向感</td>
+                                <td>{{ dimension_scores.orientation|floatformat:2 }}</td>
+                                <td>
+                                    {% if dimension_scores.orientation < 0.3 %}
+                                    <span class="badge bg-success">低</span>
+                                    {% elif dimension_scores.orientation < 0.6 %}
+                                    <span class="badge bg-warning">中</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">高</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>语言能力</td>
+                                <td>{{ dimension_scores.language|floatformat:2 }}</td>
+                                <td>
+                                    {% if dimension_scores.language < 0.3 %}
+                                    <span class="badge bg-success">低</span>
+                                    {% elif dimension_scores.language < 0.6 %}
+                                    <span class="badge bg-warning">中</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">高</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>注意力</td>
+                                <td>{{ dimension_scores.attention|floatformat:2 }}</td>
+                                <td>
+                                    {% if dimension_scores.attention < 0.3 %}
+                                    <span class="badge bg-success">低</span>
+                                    {% elif dimension_scores.attention < 0.6 %}
+                                    <span class="badge bg-warning">中</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">高</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>问题解决</td>
+                                <td>{{ dimension_scores.problem_solving|floatformat:2 }}</td>
+                                <td>
+                                    {% if dimension_scores.problem_solving < 0.3 %}
+                                    <span class="badge bg-success">低</span>
+                                    {% elif dimension_scores.problem_solving < 0.6 %}
+                                    <span class="badge bg-warning">中</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">高</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 对话摘要 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">对话摘要</h6>
+                <a href="{% url 'conversation_detail' conversation_id=assessment.conversation.id %}" class="btn btn-sm btn-primary">
+                    查看完整对话
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="chat-container" style="max-height: 300px; overflow-y: auto;">
+                    {% with related_messages=assessment.conversation.messages.all %}
+                    {% for message in related_messages|slice:":10" %}
+                    <div class="message message-{{ message.sender_type }}">
+                        <div class="mb-1 small text-muted">
+                            {{ message.get_sender_type_display }} - {{ message.timestamp|date:"H:i:s" }}
+                        </div>
+                        {{ message.content }}
+                    </div>
+                    {% endfor %}
+                    {% if related_messages.count > 10 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'conversation_detail' conversation_id=assessment.conversation.id %}" class="btn btn-sm btn-outline-primary">
+                            查看更多消息 (共 {{ related_messages.count }} 条)
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 获取维度评分数据
+{% with dimension_scores=assessment.detailed_results.dimension_scores %}
+const dimensionLabels = [
+    '记忆力', 
+    '方向感', 
+    '语言能力', 
+    '注意力', 
+    '问题解决'
+];
+
+const dimensionValues = [
+    {{ dimension_scores.memory|floatformat:2 }},
+    {{ dimension_scores.orientation|floatformat:2 }},
+    {{ dimension_scores.language|floatformat:2 }},
+    {{ dimension_scores.attention|floatformat:2 }},
+    {{ dimension_scores.problem_solving|floatformat:2 }}
+];
+
+// 确定每个维度的颜色
+const dimensionColors = dimensionValues.map(value => {
+    if (value < 0.3) {
+        return 'rgba(28, 200, 138, 0.8)';  // 绿色 - 低风险
+    } else if (value < 0.6) {
+        return 'rgba(246, 194, 62, 0.8)';  // 黄色 - 中风险
+    } else {
+        return 'rgba(231, 74, 59, 0.8)';   // 红色 - 高风险
+    }
+});
+
+const dimensionBorderColors = dimensionValues.map(value => {
+    if (value < 0.3) {
+        return 'rgb(28, 200, 138)';  // 绿色 - 低风险
+    } else if (value < 0.6) {
+        return 'rgb(246, 194, 62)';  // 黄色 - 中风险
+    } else {
+        return 'rgb(231, 74, 59)';   // 红色 - 高风险
+    }
+});
+{% endwith %}
+
+// 创建维度评分图表
+const ctx = document.getElementById('dimensionBarChart').getContext('2d');
+const dimensionBarChart = new Chart(ctx, {
+    type: 'horizontalBar',
+    data: {
+        labels: dimensionLabels,
+        datasets: [{
+            label: '认知维度评分',
+            data: dimensionValues,
+            backgroundColor: dimensionColors,
+            borderColor: dimensionBorderColors,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+                ticks: {
+                    min: 0,
+                    max: 1,
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    callback: function(value) {
+                        return value.toFixed(1);
+                    }
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }],
+            yAxes: [{
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    padding: 20
+                }
+            }],
+        },
+        legend: {
+            display: false
+        },
+        tooltips: {
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    return '评分: ' + tooltipItem.xLabel.toFixed(2);
+                }
+            }
+        }
+    }
+});
+</script>
+
+<style>
+@media print {
+    .no-print, .no-print * {
+        display: none !important;
+    }
+    
+    .navbar, .footer, .sidebar, .btn-group, .page-actions {
+        display: none !important;
+    }
+    
+    .content-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        margin-bottom: 20px !important;
+        break-inside: avoid;
+    }
+    
+    body {
+        padding-top: 0 !important;
+    }
+    
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+}
+</style>
+{% endblock %}
