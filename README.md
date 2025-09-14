@@ -16,7 +16,7 @@ TransMbD（Transformer Mistral 7B based on Dementia）是一個基於大型語�
 
 - 前端：HTML, CSS, JavaScript, Bootstrap
 - 後端：Django (Python)
-- 模型：基於Mistral 7B的大型語言模型
+- 模型：基於Mistral 7B的大型語言模型(以修改為「基於Mistral 7B的Breeze Model from MediaTek」)
 - 數據存儲：SQLite (開發環境)
 - 可視化：Plotly, Matplotlib
 
